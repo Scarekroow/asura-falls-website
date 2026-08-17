@@ -1,82 +1,21 @@
 const siteRootUrl = new URL('../', document.currentScript.src);
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // GitHub Pages serves folder routes with a trailing slash. Keep the
+    // dependable folder structure while presenting cleaner browser URLs.
+    const cleanRoutes = new Set(['/history/', '/gallery/', '/imprint/']);
+    if (cleanRoutes.has(window.location.pathname)) {
+        const cleanPath = window.location.pathname.slice(0, -1);
+        window.history.replaceState(null, '', cleanPath + window.location.search + window.location.hash);
+    }
+
     /**
      * Language preference and translated interface text.
      * The browser language is used once; an explicit choice is remembered.
      */
-    const translations = {
-        en: {
-            'nav.band': 'The Band', 'nav.shows': 'Shows', 'nav.media': 'Media', 'nav.press': 'Press',
-            'nav.rider': 'EPK & Rider', 'nav.contact': 'Contact', 'nav.history': 'History',
-            'nav.gallery': 'Gallery', 'nav.imprint': 'Imprint',
-            'home.bandTitle': 'The Band', 'home.showsTitle': 'Upcoming Shows',
-            'home.pressTitle': 'Press', 'home.riderTitle': 'EPK & Stage Rider',
-            'home.riderText': 'Download our Electronic Press Kit and Stage/Tech Rider.',
-            'home.riderButton': 'Download EPK & Rider',
-            'home.riderNote': 'Includes high-resolution band photos, logos, and technical requirements.',
-            'home.contactTitle': 'Contact', 'home.contactText': 'Reach out to us for bookings and inquiries.',
-            'home.contactNote': 'We are always open to collaborations and shows.',
-            'media.consent': 'Accept external services to load our {service} player.',
-            'media.loadYoutube': 'Load YouTube', 'media.loadSpotify': 'Load Spotify',
-            'history.title': 'Band History', 'gallery.title': 'Gallery',
-            'gallery.subtitle': 'Moments from the stage', 'gallery.photos': 'Photos by Michael Vogel',
-            'gallery.all': 'All', 'common.back': 'Back to main page',
-            'footer.rights': 'All rights reserved.',
-            'shows.location': 'Location:', 'shows.with': 'With:',
-            'imprint.back': 'Back to main page'
-        },
-        de: {
-            'nav.band': 'Die Band', 'nav.shows': 'Konzerte', 'nav.media': 'Media', 'nav.press': 'Presse',
-            'nav.rider': 'EPK & Rider', 'nav.contact': 'Kontakt', 'nav.history': 'Geschichte',
-            'nav.gallery': 'Galerie', 'nav.imprint': 'Impressum',
-            'home.bandTitle': 'Die Band', 'home.showsTitle': 'Kommende Konzerte',
-            'home.pressTitle': 'Presse', 'home.riderTitle': 'EPK & Stage Rider',
-            'home.riderText': 'Ladet unser Electronic Press Kit und unseren Stage/Tech-Rider herunter.',
-            'home.riderButton': 'EPK & Rider herunterladen',
-            'home.riderNote': 'Enthält hochauflösende Bandfotos, Logos und technische Anforderungen.',
-            'home.contactTitle': 'Kontakt', 'home.contactText': 'Kontaktiert uns für Booking und Anfragen.',
-            'home.contactNote': 'Wir freuen uns immer über Kooperationen und Konzerte.',
-            'media.consent': 'Externe Dienste akzeptieren, um unseren {service}-Player zu laden.',
-            'media.loadYoutube': 'YouTube laden', 'media.loadSpotify': 'Spotify laden',
-            'history.title': 'Bandgeschichte', 'gallery.title': 'Galerie',
-            'gallery.subtitle': 'Momente von der Bühne', 'gallery.photos': 'Fotos von Michael Vogel',
-            'gallery.all': 'Alle', 'common.back': 'Zurück zur Startseite',
-            'footer.rights': 'Alle Rechte vorbehalten.',
-            'shows.location': 'Ort:', 'shows.with': 'Mit:',
-            'imprint.back': 'Zurück zur Startseite'
-        }
-    };
-
     const supportedLanguages = ['en', 'de'];
+    const translations = { en: {}, de: {} };
     const siteContent = { shows: [], press: [] };
-    const germanLongForm = {
-        '.band-intro': [
-            'Asura Falls stehen für energiegeladenen modernen Metalcore mit klarer Botschaft, massiven Riffs und zwei unverwechselbaren Stimmen. Die sechsköpfige Band verbindet melodische Tiefe, emotionale Intensität und außergewöhnliche Vielfalt.',
-            'Mit Einflüssen von Bullet For My Valentine, Killswitch Engage und In Flames erschaffen Asura Falls eine kraftvolle Mischung aus eingängigen Melodien, aggressiven Breakdowns und atmosphärischen Momenten. Cleangesang und rohe Screams treffen auf schwere Gitarrenriffs und sorgen immer wieder für Überraschungen.',
-            'Seit dem Neustart mit Jenny und Nemo am Gesang hat die Band eine neue Dynamik gewonnen. Gemeinsam mit Jonas (8-saitige Gitarre), Cons (7-saitige Leadgitarre), Sueri (Bass) und Erasmus (Schlagzeug) bilden sie ein sechsköpfiges Kraftpaket, das bereit ist, die Bühnen zu erobern.',
-            'Ob auf großen Bühnen oder bei intimen Clubshows: Asura Falls stehen für Authentizität, Leidenschaft und elektrisierende Live-Energie. Die Band verwandelt kleine Clubs ebenso wie große Bühnen in ein Meer aus Bewegung und Emotion.',
-            'Mit neuen Songs und kommenden Konzerten sind Asura Falls bereit für den nächsten Schritt – kompromisslos, ehrlich und mit einem klaren Ziel: ihre Musik in die Welt zu tragen.'
-        ],
-        '.member-bio p': [
-            'Schon als kleines Kind stand Jenny gern auf der Bühne – ganz gleich, wo sie war. Gefiel ihr ein Lied, sang und tanzte sie dazu. In ihrer Jugend entwickelte sich ihr musikalisches Talent stetig weiter, seitdem singt sie in Bands. Mit ihrer fesselnden Bühnenpräsenz und einer Stimme von sanft und gefühlvoll bis kraftvoll und aggressiv bringt sie enorme Dynamik in die Band.',
-            'Nemo entdeckte früh seine Leidenschaft für Musik und ist heute, viele Jahre später, Frontmann von Asura Falls. Seine langjährige Erfahrung als Shouter, Rapper und Texter verleiht jedem Auftritt intensive Überzeugung und rohe Emotion.',
-            'Von seinem Musiklehrer inspiriert begann Jonas seine musikalische Reise vergleichsweise spät, dafür umso entschlossener. Einflüsse von Classic Rock bis Modern Metal prägten seinen Sound. Mit acht Saiten und seinem Songwriting legt er das Fundament aus Härte und Melancholie und ist zugleich der Technikexperte der Band.',
-            'Cons ist seit dem ersten Tag Gründungsmitglied, Leadgitarrist und damit der Veteran der Band. Er spielt seit seinem achten Lebensjahr Gitarre. Einflüsse aus Blues, Metal und modernen Core-Bands prägen seine melodischen Riffs und atmosphärischen Synth-Elemente.',
-            'Sueri entdeckte mit 14 Jahren seine Leidenschaft für tiefe Töne; seine Wurzeln liegen im Skatepunk der frühen 2000er. Seit 2016 ist er festes Mitglied von Asura Falls und liefert am Bass das unverzichtbare Fundament der Musik.',
-            'Obwohl Erasmus mehrere Instrumente beherrscht, gehört seine wahre Leidenschaft dem Schlagzeug. Einflüsse von Videospiel-Soundtracks bis Progressive Metal verbinden sich in seinem Spiel zu kraftvollen Beats und verspielten Fills, die Asura Falls vorantreiben.'
-        ],
-        '.history-content p': [
-            'Die Geschichte von Asura Falls begann 2014 – nicht im Proberaum, sondern bei feuchtfröhlichen Nächten, Gartenpartys und langen Abenden voller Musik. Die Gitarristen Cons und Schosch spielten damals in verschiedenen Bands, hatten aber immer eines gemeinsam: ihre Gitarren. Bei ihren Treffen entstanden eigene Riffs, spontane Songideen und energiegeladene Covers. Schnell wurde klar, dass daraus mehr als nur ein Zeitvertreib werden würde.',
-            'Inspiriert von Bands wie Killswitch Engage und Parkway Drive nahm die Idee einer eigenen Band Gestalt an. Gemeinsam mit Alex am Schlagzeug und Thomas am Bass entstand die erste Besetzung von Asura Falls. Kurz darauf vervollständigte Sänger Basti die Band.',
-            'Die ersten Konzerte folgten bald. 2015 spielten Asura Falls ihr Live-Debüt bei „Möwa Rockt“. Es folgten Bandwettbewerbe und Auftritte in Jugendzentren, bei denen sich die Band mit immer mehr eigenen Songs einen Namen machte und wertvolle Bühnenerfahrung sammelte.',
-            'In den folgenden Jahren entwickelten sich Asura Falls stetig weiter. Besetzungswechsel prägten ihren Weg und ihr Sound reifte. Nach Thomas’ Ausstieg übernahm Sueri den Bass. Als Gründungsgitarrist Schosch 2018 die Band verließ, kam kurz darauf Jonas dazu und brachte technische Stärke, Musikalität und neue kreative Energie mit.',
-            'Nicht immer lief alles reibungslos. Besonders bei Gesang und Schlagzeug fehlten wiederholt feste Mitglieder. Während der COVID-19-Pandemie wurde die Suche fast unmöglich. Trotzdem gab die Band nicht auf. Dennis kam am Schlagzeug und Erik als Sänger dazu; gemeinsam arbeiteten sie intensiv an neuem Material, auch wenn fast zwei Jahre lang kaum Auftritte möglich waren.',
-            'Nach der Pandemie kehrte die Band mit neuer Energie auf die Bühne zurück. Als Erik die Band verließ, begann erneut die Suche nach einer Stimme. Mit Nemo fand Asura Falls schließlich einen vielseitigen Frontmann. Kurz darauf kam Jenny hinzu – ihre melodische und kraftvolle Stimme ergänzte Nemos Screams und eröffnete dem Sound eine neue Dimension.',
-            'Wenig später folgte ein weiterer Rückschlag: Schlagzeuger Dennis verließ Asura Falls. Mit Erasmus fand die Band jedoch einen Drummer, dessen technische Fähigkeiten und kraftvolle Beats den Sound auf ein neues Niveau hoben und der bis heute fester Bestandteil ist.',
-            'Heute steht Asura Falls für eine Band, die trotz vieler Rückschläge nie aufgegeben hat. Angetrieben von Leidenschaft, Zusammenhalt und ständiger Entwicklung zeigt ihre Geschichte, dass echte Musik aus Ausdauer, Freundschaft und dem festen Willen entsteht, immer weiterzumachen.'
-        ]
-    };
     const savedLanguage = localStorage.getItem('asura-falls-language');
     let currentLanguage = supportedLanguages.includes(savedLanguage)
         ? savedLanguage
@@ -91,12 +30,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             || '';
     };
 
+    const translate = key => translations[currentLanguage][key]
+        || translations.en[key]
+        || translations.de[key]
+        || '';
+
+    const parseContentResponse = async response => {
+        const text = (await response.text()).replace(/^\uFEFF/, '');
+        return JSON.parse(text.replace(/,\s*([}\]])/g, '$1'));
+    };
+
     const renderShows = () => {
         const container = document.getElementById('shows-content');
         if (!container) return;
         container.innerHTML = siteContent.shows.map(show => {
-            const location = show.location ? `<p><strong>${translations[currentLanguage]['shows.location']}</strong> ${localized(show.location)}</p>` : '';
-            const withArtists = show.with ? `<p><strong>${translations[currentLanguage]['shows.with']}</strong> ${localized(show.with)}</p>` : '';
+            const location = show.location ? `<p><strong>${translate('shows.location')}</strong> ${localized(show.location)}</p>` : '';
+            const withArtists = show.with ? `<p><strong>${translate('shows.with')}</strong> ${localized(show.with)}</p>` : '';
             const description = show.description ? `<p>${localized(show.description)}</p>` : '';
             const ticket = show.ticketLabel
                 ? show.url
@@ -128,31 +77,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentLanguage = supportedLanguages.includes(language) ? language : 'en';
         if (persist) localStorage.setItem('asura-falls-language', currentLanguage);
         document.documentElement.lang = currentLanguage;
-        const route = window.location.pathname.replace(/\/+$/, '').split('/').pop() || 'home';
-        const pageTitles = {
-            home: { en: 'Asura Falls | Metalcore from Frankfurt', de: 'Asura Falls | Metalcore aus Frankfurt' },
-            history: { en: 'History | Asura Falls', de: 'Geschichte | Asura Falls' },
-            gallery: { en: 'Gallery | Asura Falls', de: 'Galerie | Asura Falls' },
-            imprint: { en: 'Imprint | Asura Falls', de: 'Impressum | Asura Falls' }
+        const route = document.body.dataset.page
+            || window.location.pathname.replace(/\/+$/, '').split('/').pop()
+            || 'home';
+        const setMetaContent = (selector, content) => {
+            const element = document.querySelector(selector);
+            if (element && content) element.setAttribute('content', content);
         };
-        if (pageTitles[route]) document.title = pageTitles[route][currentLanguage];
+        const title = translate(`page.${route}.title`);
+        const description = translate(`page.${route}.description`);
+        if (title) document.title = title;
+        setMetaContent('meta[name="description"]', description);
+        setMetaContent('meta[property="og:title"]', title);
+        setMetaContent('meta[property="og:description"]', description);
+        setMetaContent('meta[property="og:locale"]', currentLanguage === 'de' ? 'de_DE' : 'en_US');
+        setMetaContent('meta[name="twitter:title"]', title);
+        setMetaContent('meta[name="twitter:description"]', description);
         document.querySelectorAll('[data-i18n]').forEach(element => {
-            const translated = translations[currentLanguage][element.dataset.i18n];
+            const translated = translate(element.dataset.i18n);
             if (translated) element.textContent = translated.replace('{service}', element.dataset.service || '');
         });
-        document.querySelectorAll('[data-i18n-en][data-i18n-de]').forEach(element => {
-            element.textContent = element.dataset[`i18n${currentLanguage === 'de' ? 'De' : 'En'}`];
-        });
-        Object.entries(germanLongForm).forEach(([selector, germanTexts]) => {
+        const longForm = {
+            '.band-intro': translate('bandIntro'),
+            '.member-bio h3': translate('memberHeadings'),
+            '.member-bio p': translate('memberBios'),
+            '.history-content p': translate('historyParagraphs')
+        };
+        Object.entries(longForm).forEach(([selector, texts]) => {
+            if (!Array.isArray(texts)) return;
             document.querySelectorAll(selector).forEach((element, index) => {
-                if (!element.dataset.englishText) element.dataset.englishText = element.textContent.trim();
-                element.textContent = currentLanguage === 'de'
-                    ? (germanTexts[index] || element.dataset.englishText)
-                    : element.dataset.englishText;
+                if (texts[index]) element.textContent = texts[index];
             });
-        });
-        document.querySelectorAll('[data-title-en][data-title-de]').forEach(element => {
-            element.textContent = currentLanguage === 'de' ? element.dataset.titleDe : element.dataset.titleEn;
         });
         document.querySelectorAll('.language-toggle button').forEach(button => {
             const active = button.dataset.language === currentLanguage;
@@ -172,6 +127,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         element.textContent = new Date().getFullYear();
     });
 
+    try {
+        const [englishResponse, germanResponse] = await Promise.all([
+            fetch(new URL('data/en.json', siteRootUrl)),
+            fetch(new URL('data/de.json', siteRootUrl))
+        ]);
+        if (!englishResponse.ok || !germanResponse.ok) throw new Error('Translation request failed');
+        [translations.en, translations.de] = await Promise.all([
+            parseContentResponse(englishResponse),
+            parseContentResponse(germanResponse)
+        ]);
+    } catch (error) {
+        console.error('Unable to load website translations.', error);
+    }
+
     applyLanguage(currentLanguage);
 
     if (document.getElementById('shows-content') || document.getElementById('press-content')) {
@@ -181,12 +150,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 fetch(new URL('data/press.json', siteRootUrl))
             ]);
             if (!showsResponse.ok || !pressResponse.ok) throw new Error('Content request failed');
-            const parseContentResponse = async response => {
-                const text = (await response.text()).replace(/^\uFEFF/, '');
-                // Content editors commonly remove one translation line and leave
-                // its preceding comma behind. Accept that harmless JSON mistake.
-                return JSON.parse(text.replace(/,\s*([}\]])/g, '$1'));
-            };
             [siteContent.shows, siteContent.press] = await Promise.all([
                 parseContentResponse(showsResponse),
                 parseContentResponse(pressResponse)
